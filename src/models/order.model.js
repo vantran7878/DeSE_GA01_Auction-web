@@ -16,20 +16,6 @@ import db from '../utils/db.js';
  * 7. cancelled: Đơn hàng bị hủy
  */
 
-// Định nghĩa cấu hình
-const STATUS_UPDATES = {
-  payment_submitted: () => ({ payment_submitted_at: db.fn.now() }),
-  payment_confirmed: () => ({ payment_confirmed_at: db.fn.now() }),
-  shipped: () => ({ shipped_at: db.fn.now() }),
-  delivered: () => ({ delivered_at: db.fn.now() }),
-  completed: () => ({ completed_at: db.fn.now() }),
-  cancelled: (userId, note) => ({
-    cancelled_at: db.fn.now(),
-    cancelled_by: userId,
-    cancellation_reason: note
-  }),
-};
-
 /**
  * Tạo order mới (thường được trigger tự động tạo)
  */
@@ -183,47 +169,37 @@ export async function updateStatus(orderId, newStatus, userId, note = null) {
 
     const oldStatus = order.status;
     
-    // Lấy logic cập nhật từ cấu hình
-    const getExtraData = STATUS_UPDATES[newStatus];
-    const extraData = getExtraData ? getExtraData(userId, note) : {};
-
+    // Cập nhật order
     const updateData = {
       status: newStatus,
-      updated_at: db.fn.now(),
-      ...extraData // Gộp dữ liệu đặc thù của trạng thái
+      updated_at: db.fn.now()
     };
 
-    // // Cập nhật order
-    // const updateData = {
-    //   status: newStatus,
-    //   updated_at: db.fn.now()
-    // };
-
-    // // Cập nhật timestamp tương ứng
-    // switch (newStatus) {
-    //   case 'payment_submitted':
-    //     updateData.payment_submitted_at = db.fn.now();
-    //     break;
-    //   case 'payment_confirmed':
-    //     updateData.payment_confirmed_at = db.fn.now();
-    //     break;
-    //   case 'shipped':
-    //     updateData.shipped_at = db.fn.now();
-    //     break;
-    //   case 'delivered':
-    //     updateData.delivered_at = db.fn.now();
-    //     break;
-    //   case 'completed':
-    //     updateData.completed_at = db.fn.now();
-    //     break;
-    //   case 'cancelled':
-    //     updateData.cancelled_at = db.fn.now();
-    //     updateData.cancelled_by = userId;
-    //     if (note) {
-    //       updateData.cancellation_reason = note;
-    //     }
-    //     break;
-    // }
+    // Cập nhật timestamp tương ứng
+    switch (newStatus) {
+      case 'payment_submitted':
+        updateData.payment_submitted_at = db.fn.now();
+        break;
+      case 'payment_confirmed':
+        updateData.payment_confirmed_at = db.fn.now();
+        break;
+      case 'shipped':
+        updateData.shipped_at = db.fn.now();
+        break;
+      case 'delivered':
+        updateData.delivered_at = db.fn.now();
+        break;
+      case 'completed':
+        updateData.completed_at = db.fn.now();
+        break;
+      case 'cancelled':
+        updateData.cancelled_at = db.fn.now();
+        updateData.cancelled_by = userId;
+        if (note) {
+          updateData.cancellation_reason = note;
+        }
+        break;
+    }
 
     await trx('orders')
       .where('id', orderId)

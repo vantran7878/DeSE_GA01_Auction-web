@@ -330,6 +330,32 @@ export function countByCategoryIds(categoryIds) {
     .first();
 }
 
+/**
+ * Lấy danh sách unique bidders của một sản phẩm (với email)
+ * @param {number} productId - ID sản phẩm
+ * @returns {Promise<Array>} Danh sách bidders với email
+ */
+export async function getUniqueBidders(productId) {
+  return db('bidding_history')
+    .join('users', 'bidding_history.bidder_id', 'users.id')
+    .where('bidding_history.product_id', productId)
+    .distinct('users.id', 'users.email', 'users.fullname')
+    .select('users.id', 'users.email', 'users.fullname');
+}
+
+/**
+ * Lấy bid cao nhất của một sản phẩm
+ * @param {number} productId - ID sản phẩm
+ * @returns {Promise<Object>} Bid cao nhất
+ */
+export async function getHighestBid(productId) {
+  return db('bidding_history')
+    .where('product_id', productId)
+    .orderBy('current_price', 'desc')
+    .first();
+}
+
+
 // Helper chung để select cột và che tên bidder
 const BASE_QUERY = db('products')
   .leftJoin('users', 'products.highest_bidder_id', 'users.id')
