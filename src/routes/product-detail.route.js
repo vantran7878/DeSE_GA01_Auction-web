@@ -42,22 +42,25 @@ router.get('/detail', async (req, res) => {
   
   //DRY fixed for if statement and status determination
   const productStatus = determineProductStatus(product, now);
-  const isSeller = product.seller_id === userId;
-  const isHighestBidder = product.highest_bidder_id === userId;
-
-  console.log(`Product status: ${productStatus}, isSeller: ${isSeller}, seller_id: ${product.seller_id}, user_id: ${userId}, isHighestBidder: ${isHighestBidder}`);
-
-  if (!isSeller && !isHighestBidder) {
-    return res.status(403).render('403', { message: 'You do not have permission to view this product' });
-  }
 
   // Edited, DRY fixed: 
   // Authorization check: Non-ACTIVE products can only be viewed by seller or highest bidder
-  //if (!canViewProduct(product, userId, productStatus)) {
-  //  return res.status(403).render('403', { message: 'You do not have permission to view this product' });
-  //}
+  if (productStatus !== 'ACTIVE') {
+    if (!userId) {
+      // User not logged in, cannot view non-active products
+      return res.status(403).render('403', { message: 'You do not have permission to view this product' });
+    }
+    
+    const isSeller = product.seller_id === userId;
+    const isHighestBidder = product.highest_bidder_id === userId;
 
+    console.log(`Product status: ${productStatus}, isSeller: ${isSeller}, seller_id: ${product.seller_id}, user_id: ${userId}, isHighestBidder: ${isHighestBidder}`);
 
+    
+    if (!isSeller && !isHighestBidder) {
+      return res.status(403).render('403', { message: 'You do not have permission to view this product' });
+    }
+  }
 
   // Pagination for comments
   const commentPage = parseInt(req.query.commentPage) || 1;
