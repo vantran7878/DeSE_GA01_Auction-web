@@ -6,6 +6,7 @@ import * as upgradeRequestModel from '../models/upgradeRequest.model.js';
 import * as watchlistModel from '../models/watchlist.model.js';
 import * as reviewModel from '../models/review.model.js';
 import * as autoBiddingModel from '../models/autoBidding.model.js';
+import * as otpModel from '../models/otp.model.js'
 import { isAuthenticated } from '../middlewares/auth.mdw.js';
 import { sendMail } from '../utils/mailer.js';
 
@@ -82,7 +83,7 @@ router.post('/forgot-password', async (req, res) => {
   }
   const otp = generateOtp();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
-  await userModel.createOtp({
+  await otpModel.createOtp({
     user_id: user.id,
     otp_code: otp,
     purpose: 'reset_password',
@@ -104,7 +105,7 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/verify-forgot-password-otp', async (req, res) => {
     const { email, otp } = req.body;
     const user = await userModel.findByEmail(email);
-    const otpRecord = await userModel.findValidOtp({
+    const otpRecord = await otpModel.findValidOtp({
       user_id: user.id,
       otp_code: otp,
       purpose: 'reset_password',
@@ -117,7 +118,7 @@ router.post('/verify-forgot-password-otp', async (req, res) => {
         error_message: 'Invalid or expired OTP.',
       });
     }
-    await userModel.markOtpUsed(otpRecord.id);
+    await otpModel.markOtpUsed(otpRecord.id);
     return res.render('vwAccount/auth/reset-password', { email });
 });
 router.post('/resend-forgot-password-otp', async (req, res) => {
@@ -131,7 +132,7 @@ router.post('/resend-forgot-password-otp', async (req, res) => {
   }
   const otp = generateOtp();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
-  await userModel.createOtp({
+  await otpModel.createOtp({
     user_id: user.id,
     otp_code: otp,
     purpose: 'reset_password',
@@ -197,7 +198,7 @@ router.post('/signin', async function (req, res) {
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
 
-    await userModel.createOtp({
+    await otpModel.createOtp({
       user_id: user.id,
       otp_code: otp,
       purpose: 'verify_email',
@@ -295,7 +296,7 @@ router.post('/signup', async function (req, res) {
 
   console.log('User id: ', newUser.id, ' OTP: ', otp);
 
-  await userModel.createOtp({
+  await otpModel.createOtp({
     user_id: newUser.id,
     otp_code: otp,
     purpose: 'verify_email',
@@ -338,7 +339,7 @@ router.post('/verify-email', async (req, res) => {
     });
   }
 
-  const otpRecord = await userModel.findValidOtp({
+  const otpRecord = await otpModel.findValidOtp({
     user_id: user.id,
     otp_code: otp,
     purpose: 'verify_email',
@@ -351,7 +352,7 @@ router.post('/verify-email', async (req, res) => {
     });
   }
 
-  await userModel.markOtpUsed(otpRecord.id);
+  await otpModel.markOtpUsed(otpRecord.id);
   await userModel.verifyUserEmail(user.id);
 
   req.session.success_message =
@@ -380,7 +381,7 @@ router.post('/resend-otp', async (req, res) => {
   const otp = generateOtp();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
 
-  await userModel.createOtp({
+  await otpModel.createOtp({
     user_id: user.id,
     otp_code: otp,
     purpose: 'verify_email',
@@ -573,7 +574,7 @@ router.get('/bidding', isAuthenticated, async (req, res) => {
 // Won Auctions - Sản phẩm đã thắng (pending, sold, cancelled)
 router.get('/auctions', isAuthenticated, async (req, res) => {
   const currentUserId = req.session.authUser.id;
-  const wonAuctions = await autoBiddingModel.getWonAuctionsByBidderId(currentUserId);
+  const wonAuctions = await userModel.getWonAuctionsByBidderId(currentUserId);
   
   // Check if user has rated seller for each product
   for (let product of wonAuctions) {

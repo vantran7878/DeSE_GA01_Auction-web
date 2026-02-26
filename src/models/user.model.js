@@ -40,20 +40,6 @@ export function findByEmail(email) {
 }
 
 /**
- * Kiểm tra xem user đã bid cho sản phẩm này chưa
- * @param {number} productId - ID sản phẩm
- * @param {number} bidderId - ID người đặt giá
- * @returns {Promise<boolean>} True nếu đã bid
- */
-export async function hasUserBidOnProduct(productId, bidderId) {
-  const result = await db('bidding_history')
-    .where('product_id', productId)
-    .where('bidder_id', bidderId)
-    .first();
-  return !!result;
-}
-
-/**
  * Lấy tất cả sản phẩm mà bidder đã thắng (pending, sold, cancelled)
  * @param {number} bidderId - ID người đặt giá
  * @returns {Promise<Array>} Danh sách sản phẩm
@@ -97,38 +83,6 @@ export async function getWonAuctionsByBidderId(bidderId) {
     .orderBy('products.end_at', 'desc');
 }
 
-// ===================== OTP USING KNEX =====================
-
-// Tạo OTP
-export function createOtp({ user_id, otp_code, purpose, expires_at }) {
-  return db('user_otps').insert({
-    user_id,
-    otp_code,
-    purpose,
-    expires_at
-  });
-}
-
-// Tìm OTP còn hiệu lực
-export function findValidOtp({ user_id, otp_code, purpose }) {
-  return db('user_otps')
-    .where({
-      user_id,
-      otp_code,
-      purpose,
-      used: false
-    })
-    .andWhere('expires_at', '>', db.fn.now())
-    .orderBy('id', 'desc')
-    .first();
-}
-
-// Đánh dấu OTP đã dùng
-export function markOtpUsed(id) {
-  return db('user_otps')
-    .where('id', id)
-    .update({ used: true });
-}
 
 // Verify email user
 export function verifyUserEmail(user_id) {

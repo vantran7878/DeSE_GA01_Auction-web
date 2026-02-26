@@ -48,21 +48,6 @@ export async function countCommentsByProductId(productId) {
 }
 
 /**
- * Lấy replies của một comment
- */
-export async function getRepliesByCommentId(commentId) {
-  return db('product_comments')
-    .join('users', 'product_comments.user_id', 'users.id')
-    .where('product_comments.parent_id', commentId)
-    .select(
-      'product_comments.*',
-      'users.fullname as user_name',
-      'users.role as user_role'
-    )
-    .orderBy('product_comments.created_at', 'asc');
-}
-
-/**
  * Lấy replies của nhiều comments cùng lúc (batch query để tránh N+1 problem)
  * @param {Array<number>} commentIds - Mảng các comment IDs
  * @returns {Promise<Array>} Danh sách replies
@@ -81,25 +66,6 @@ export async function getRepliesByCommentIds(commentIds) {
       'users.role as user_role'
     )
     .orderBy('product_comments.created_at', 'asc');
-}
-
-/**
- * Xóa comment
- */
-export async function deleteComment(commentId, userId) {
-  return db('product_comments')
-    .where('id', commentId)
-    .where('user_id', userId)
-    .delete();
-}
-
-/**
- * Lấy comment theo ID
- */
-export async function findCommentById(commentId) {
-  return db('product_comments')
-    .where('id', commentId)
-    .first();
 }
 
 /**
