@@ -253,6 +253,10 @@ router.get('/detail', async (req, res) => {
     showPaymentButton = (product.seller_id === userId || product.highest_bidder_id === userId);
   }
   
+  // end statuses
+  const endedStatuses = ['SOLD', 'EXPIRED', 'CANCELLED'];
+  const isOwner = req.session.authUser?.id === product.seller_id;
+
   res.render('vwProduct/details', { 
     product,
     productStatus, // Pass status to view
@@ -271,7 +275,17 @@ router.get('/detail', async (req, res) => {
     commentPage,
     totalPages,
     totalComments,
-    showPaymentButton
+    showPaymentButton,
+    showBidButton:     productStatus === 'ACTIVE' && !isOwner,
+    showBuyNowButton:  productStatus === 'ACTIVE' && !!product.buy_now_price && !isOwner,
+    showPayButton:     productStatus === 'PENDING' && showPaymentButton,
+    isAuctionEnded:    endedStatuses.includes(productStatus),
+    isOwnerActive:     isOwner && productStatus === 'ACTIVE',
+    endedStatusIcon: {
+      SOLD:      'check-circle-fill',
+      EXPIRED:   'x-circle-fill',
+      CANCELLED: 'ban-fill'
+    }[productStatus] || null,
   });
 });
 
