@@ -66,56 +66,12 @@
   </div>
 </section>
 
+{{!-- countdown --}}
+<script src="/static/js/countdown.js"></script>
 <script>
-  // Real-time countdown timer for home page
-  function updateHomeCountdowns() {
-    const countdownElements = document.querySelectorAll('.home-countdown-timer');
-    
-    countdownElements.forEach(element => {
-      const endDate = new Date(element.getAttribute('data-end-date'));
-      const now = new Date();
-      const timeLeft = endDate - now;
-      
-      if (timeLeft <= 0) {
-        element.textContent = 'Ended';
-        element.classList.remove('text-danger');
-        element.classList.add('text-muted');
-        return;
-      }
-      
-      // Calculate time units
-      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-      
-      // Format output - compact with colon notation
-      let timeString = '';
-      if (days > 0) {
-        timeString = `${days}d ${hours}h ${minutes}m`;
-      } else if (hours > 0) {
-        timeString = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-      } else if (minutes > 0) {
-        timeString = `${minutes}:${String(seconds).padStart(2, '0')}`;
-      } else {
-        timeString = `${seconds}s`;
-      }
-      
-      element.textContent = timeString;
-      
-      // Change color based on urgency
-      if (days === 0 && hours < 1) {
-        element.classList.remove('text-danger');
-        element.classList.add('text-danger', 'fw-bold');
-      }
-    });
-  }
-  
-  // Update immediately and then every second
   document.addEventListener('DOMContentLoaded', function() {
-    updateHomeCountdowns();
-    setInterval(updateHomeCountdowns, 1000);
-    
+    initCountdowns('.home-countdown-timer');
+
     // Initialize main banner swiper
     new Swiper('.main-swiper', {
       slidesPerView: 1,
