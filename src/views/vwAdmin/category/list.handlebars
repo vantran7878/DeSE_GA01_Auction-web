@@ -1,29 +1,7 @@
 {{#section 'js'}}
+<script src="/static/js/initDeleteConfirm.js"></script>
 <script>
-    // Xử lý sự kiện nút xóa
-    $('.btn-delete').on('click', function(e) {
-        e.preventDefault();
-        const id = $(this).data('id');
-        const name = $(this).data('name');
-        const form = $('#formDelete');
-        
-        form.attr('action', '/admin/categories/delete'); 
-        $('#txtDeleteId').val(id);
-        
-        Swal.fire({
-            title: 'Are you sure?',
-            text: `You are about to delete category: "${name}". This action cannot be undone!`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit();
-            }
-        });
-    });
+  initDeleteConfirm('/admin/categories/delete', 'category');
 </script>
 {{/section}}
 
