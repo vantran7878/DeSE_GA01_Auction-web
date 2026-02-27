@@ -3,7 +3,7 @@ export const pad = (n) => String(n).padStart(2, '0');
 export function parseDate(date) {
   if (!date) return null;
   const d = new Date(date);
-  if (!isNaN(d.getTime()))
+  if (isNaN(d.getTime()))
     return null;
   return d;
 }
