@@ -15,7 +15,7 @@ import accountRouter from './routes/account.route.js';
 import sellerRouter from './routes/seller-product.route.js';
 import adminRouter from './routes/admin/admin.route.js'
 // Import Middlewares
-import { isAuthenticated, isSeller, isAdmin } from './middlewares/auth.mdw.js';
+import { isAuthenticated, requireRole } from './middlewares/auth.mdw.js';
 import { configViewEngine } from './config/view_engine.js';
 import { userInfoMiddleware } from './middlewares/user.mdw.js';
 import { categoryMiddleware } from './middlewares/category.mdw.js'
@@ -63,7 +63,7 @@ app.use(categoryMiddleware);
 
 // A. Bảo mật trước tiên: Mọi route /admin/* phải qua cửa kiểm soát
 
-app.use('/admin', isAdmin);
+app.use('/admin', requireRole('admin'));
 
 // B. Thiết lập giao diện Admin (Bật cờ để Layout biết đường hiển thị Sidebar)
 app.use('/admin', function (req, res, next) {
@@ -78,7 +78,7 @@ app.use('/admin', function (req, res, next) {
 // Các Route Admin
 app.use('/admin', adminRouter);
 // Các Route Seller
-app.use('/seller', isAuthenticated, isSeller, sellerRouter);
+app.use('/seller', isAuthenticated, requireRole('seller'), sellerRouter);
 
 // API endpoint for categories (for search modal)
 app.get('/api/categories', async (req, res) => {
