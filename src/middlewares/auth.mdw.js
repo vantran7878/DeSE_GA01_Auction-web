@@ -6,18 +6,18 @@ export function isAuthenticated(req, res, next) {
         res.redirect('/account/signin');
     }
 }
+export function isSeller(req, res, next) {
+    if (req.session.authUser.role === "seller") {
+        next();
+    } else {
+        res.render('403');
 
-export function requireRole(...allowedRoles) {
-    return (req, res, next) => {
-        if (!req.session.authUser) {
-            return res.redirect('/account/signin');
-        }
-
-        const hasRole = allowedRoles.includes(req.session.authUser.role);
-        if (hasRole) {
-            next();
-        } else {
-            res.render('403');
-        }
+    }
+}
+export function isAdmin(req, res, next) {
+    if (req.session.authUser.role === "admin") {
+        next();
+    } else {
+        res.render('403');
     }
 }

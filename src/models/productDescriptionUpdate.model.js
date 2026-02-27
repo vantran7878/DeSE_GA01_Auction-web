@@ -31,9 +31,3 @@ export function deleteUpdate(updateId) {
     .where('id', updateId)
     .del();
 }
-
-export function deleteByProductId(productId) {
-  return db('product_description_updates')
-    .where('product_id', productId)
-    .del();
-}
