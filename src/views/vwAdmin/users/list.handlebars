@@ -1,29 +1,7 @@
 {{#section 'js'}}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/static/js/initDeleteConfirm.js"></script>
 <script>
-    // Xử lý sự kiện nút xóa
-    $('.btn-delete').on('click', function(e) {
-        e.preventDefault();
-        const id = $(this).data('id');
-        const form = $('#formDelete');
-        
-        form.attr('action', '/admin/users/delete'); 
-        $('#txtDeleteId').val(id);
-        
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this! This user will be permanently deleted.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545', // Màu đỏ Danger
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Yes, delete user!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit();
-            }
-        });
-    });
+  initDeleteConfirm('/admin/users/delete', 'user');
 </script>
 {{/section}}
 

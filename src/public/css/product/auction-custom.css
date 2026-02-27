@@ -1,0 +1,95 @@
+/* SweetAlert2 Custom Buttons */
+.swal-btn-confirm,
+.swal-btn-cancel {
+min-width: 120px !important;
+padding: 12px 32px !important;
+font-size: 16px !important;
+font-weight: 600 !important;
+border-radius: 8px !important;
+transition: all 0.3s ease !important;
+border: none !important;
+}
+
+.swal-btn-confirm {
+background: linear-gradient(135deg, #72AEC8 0%, #5a9bb8 100%) !important;
+color: white !important;
+}
+
+.swal-btn-confirm:hover {
+background: linear-gradient(135deg, #5a9bb8 0%, #4a8aa8 100%) !important;
+transform: translateY(-2px) !important;
+box-shadow: 0 4px 12px rgba(114, 174, 200, 0.4) !important;
+}
+
+.swal-btn-confirm:active {
+transform: translateY(0) !important;
+}
+
+.swal-btn-cancel {
+background: #6c757d !important;
+color: white !important;
+}
+
+.swal-btn-cancel:hover {
+background: #5a6268 !important;
+transform: translateY(-2px) !important;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.swal-btn-cancel:active {
+transform: translateY(0) !important;
+}
+
+/* Bid Modal Enhancements */
+#decreaseBid:hover,
+#increaseBid:hover {
+background-color: #72AEC8 !important;
+color: white !important;
+border-color: #72AEC8 !important;
+transform: scale(1.05);
+}
+
+#decreaseBid:active,
+#increaseBid:active {
+transform: scale(0.95);
+background-color: #5a9bb8 !important;
+}
+
+#submitBidBtn:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 20px rgba(114, 174, 200, 0.4) !important;
+}
+
+#submitBidBtn:active {
+transform: translateY(0);
+}
+
+#bidModal .btn-outline-secondary:hover {
+transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#bidAmount {
+transition: all 0.3s ease;
+}
+
+#bidAmount:focus {
+box-shadow: 0 0 0 0.2rem rgba(114, 174, 200, 0.25);
+}
+
+/* Quick increment buttons */
+.quick-increment:hover,
+.quick-decrement:hover {
+transform: scale(1.05);
+box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.quick-increment:active,
+.quick-decrement:active {
+transform: scale(0.95);
+}
+
+/* Prevent layout shift when modal opens */
+body.modal-open {
+padding-right: 0 !important;
+}
