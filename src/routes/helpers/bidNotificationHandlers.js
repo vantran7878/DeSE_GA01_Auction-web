@@ -1,5 +1,4 @@
 // routes/helpers/bidNotificationHandlers.js
-// Matches exactly the style of notificationHandlers.js
 
 export const bidNotificationHandlers = [
   // 1. Notify SELLER - New bid received

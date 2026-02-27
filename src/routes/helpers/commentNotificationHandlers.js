@@ -1,5 +1,4 @@
 // routes/helpers/commentNotificationHandlers.js
-// Matches exactly the style of notificationHandlers.js & bidNotificationHandlers.js
 
 export const commentNotificationHandlers = [
   // 1. Seller is replying to a question → notify all bidders & commenters

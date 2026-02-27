@@ -14,6 +14,12 @@ import db from '../utils/db.js';
 
 const router = express.Router();
 
+//EDIT: DRY - Helper function to redirect back to the previous page
+const redirectBack = (req, res) => {
+  const backURL = req.headers.referer || '/';
+  res.redirect(backURL);
+};
+
 // ROUTE: BIDDING HISTORY PAGE (Requires Authentication)
 router.get('/bidding-history', isAuthenticated, async (req, res) => {
   const productId = req.query.id;
@@ -55,8 +61,7 @@ router.post('/watchlist', isAuthenticated, async (req, res) => {
 
   // SỬA LẠI: Lấy địa chỉ trang trước đó từ header
   // Nếu không tìm thấy (trường hợp hiếm), quay về trang chủ '/'
-  const retUrl = req.headers.referer || '/';
-  res.redirect(retUrl);
+  redirectBack(req, res);
 });
 
 // ROUTE 2: XÓA KHỎI WATCHLIST (DELETE)
@@ -67,8 +72,7 @@ router.delete('/watchlist', isAuthenticated, async (req, res) => {
   await watchListModel.removeFromWatchlist(userId, productId);
 
   // SỬA LẠI: Tương tự như trên
-  const retUrl = req.headers.referer || '/';
-  res.redirect(retUrl);
+  redirectBack(req, res);
 });
 
 // ROUTE 3: ĐẶT GIÁ (POST) - Server-side rendering with automatic bidding

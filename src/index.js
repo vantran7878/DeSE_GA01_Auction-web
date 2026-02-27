@@ -23,7 +23,7 @@ import adminUserRouter from './routes/admin/user.route.js';
 import adminAccountRouter from './routes/admin/account.route.js';
 import adminProductRouter from './routes/admin/product.route.js';
 import adminSystemRouter from './routes/admin/system.route.js';
-import sellerRouter from './routes/seller.route.js';
+import sellerRouter from './routes/seller-product.route.js';
 // Import Middlewares
 import { isAuthenticated, requireRole } from './middlewares/auth.mdw.js';
 import * as categoryModel from './models/category.model.js';

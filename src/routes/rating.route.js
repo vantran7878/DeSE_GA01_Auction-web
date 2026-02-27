@@ -3,6 +3,30 @@ import * as reviewModel from '../models/review.model.js';
 import * as userModel from '../models/user.model.js';
 const router = express.Router();
 
+// EDIT: Fix DRY - Load rating page data for both seller and bidder
+const loadRatingPageData = async (userId) => {
+  const user = await userModel.findById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const ratingData = await reviewModel.calculateRatingPoint(userId);
+  const reviews = await reviewModel.getReviewsByUserId(userId);
+
+  const positiveReviews = reviews.filter(r => r.rating === 1).length;
+  const negativeReviews = reviews.filter(r => r.rating === -1).length;  
+
+  return {
+    user,
+    rating_point: ratingData?.rating_point ||  0,
+    reviews,
+    totalReviews: reviews.length,
+    positiveReviews,
+    negativeReviews
+
+  };
+}
+
 // ROUTE: Seller Ratings Page
 router.get('/seller/:sellerId/ratings', async (req, res) => {
   try {
@@ -13,30 +37,17 @@ router.get('/seller/:sellerId/ratings', async (req, res) => {
     }
     
     // Get seller info
-    const seller = await userModel.findById(sellerId);
-    if (!seller) {
-      return res.redirect('/');
-    }
-    
-    // Get rating point
-    const ratingData = await reviewModel.calculateRatingPoint(sellerId);
-    const rating_point = ratingData ? ratingData.rating_point : 0;
-    
-    // Get all reviews
-    const reviews = await reviewModel.getReviewsByUserId(sellerId);
-    
-    // Calculate statistics
-    const totalReviews = reviews.length;
-    const positiveReviews = reviews.filter(r => r.rating === 1).length;
-    const negativeReviews = reviews.filter(r => r.rating === -1).length;
-    
+    const data = await loadRatingPageData(sellerId);
+    if (!data) return res.redirect('/');
+
+
     res.render('vwProduct/seller-ratings', {
-      sellerName: seller.fullname,
-      rating_point,
-      totalReviews,
-      positiveReviews,
-      negativeReviews,
-      reviews
+      sellerName: data.user.fullname,
+      rating_point: data.rating_point,
+      totalReviews: data.totalReviews,
+      positiveReviews: data.positiveReviews,
+      negativeReviews: data.negativeReviews,
+      reviews: data.reviews
     });
     
   } catch (error) {
@@ -61,17 +72,9 @@ router.get('/bidder/:bidderId/ratings', async (req, res) => {
     }
     
     // Get rating point
-    const ratingData = await reviewModel.calculateRatingPoint(bidderId);
-    const rating_point = ratingData ? ratingData.rating_point : 0;
-    
-    // Get all reviews
-    const reviews = await reviewModel.getReviewsByUserId(bidderId);
-    
-    // Calculate statistics
-    const totalReviews = reviews.length;
-    const positiveReviews = reviews.filter(r => r.rating === 1).length;
-    const negativeReviews = reviews.filter(r => r.rating === -1).length;
-    
+    const data = await loadRatingPageData(bidderId);
+    if (!data) return res.redirect('/');
+
     // Mask bidder name
     const maskedName = bidder.fullname ? bidder.fullname.split('').map((char, index) => 
       index % 2 === 0 ? char : '*'
@@ -79,11 +82,11 @@ router.get('/bidder/:bidderId/ratings', async (req, res) => {
     
     res.render('vwProduct/bidder-ratings', {
       bidderName: maskedName,
-      rating_point,
-      totalReviews,
-      positiveReviews,
-      negativeReviews,
-      reviews
+      rating_point: data.rating_point,
+      totalReviews: data.totalReviews,
+      positiveReviews: data.positiveReviews,
+      negativeReviews: data.negativeReviews,
+      reviews: data.reviews
     });
     
   } catch (error) {

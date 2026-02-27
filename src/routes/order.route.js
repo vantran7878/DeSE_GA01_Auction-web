@@ -12,6 +12,31 @@ import path from 'path';
 
 const router = express.Router();
 
+const parseArrayField = (field) => {
+  if (!field) return [];
+  if (typeof field === 'string') {
+    return field
+      .replace(/^\{/, '')
+      .replace(/\}$/, '')
+      .split(',')
+      .filter(Boolean);
+  }
+  return field;
+};
+
+const determineProductStatus = (product) => {
+  const now = new Date();
+  const endDate = new Date(product.end_at);
+
+  if (product.is_sold === true) return 'SOLD';
+  if (product.is_sold === false) return 'CANCELLED';
+  if ((endDate <= now || product.closed_at) && product.highest_bidder_id) return 'PENDING';
+  if (endDate <= now && !product.highest_bidder_id) return 'EXPIRED';
+  return 'ACTIVE';
+};
+
+
+
 // ROUTE: COMPLETE ORDER PAGE (For PENDING products)
 router.get('/complete-order', isAuthenticated, async (req, res) => {
   const userId = req.session.authUser.id;
@@ -28,19 +53,7 @@ router.get('/complete-order', isAuthenticated, async (req, res) => {
   }
   
   // Determine product status
-  const now = new Date();
-  const endDate = new Date(product.end_at);
-  let productStatus = 'ACTIVE';
-  
-  if (product.is_sold === true) {
-    productStatus = 'SOLD';
-  } else if (product.is_sold === false) {
-    productStatus = 'CANCELLED';
-  } else if ((endDate <= now || product.closed_at) && product.highest_bidder_id) {
-    productStatus = 'PENDING';
-  } else if (endDate <= now && !product.highest_bidder_id) {
-    productStatus = 'EXPIRED';
-  }
+  const productStatus = determineProductStatus(product);
   
   // Only PENDING products can access this page
   if (productStatus !== 'PENDING') {
@@ -78,26 +91,13 @@ router.get('/complete-order', isAuthenticated, async (req, res) => {
   if (paymentInvoice && paymentInvoice.payment_proof_urls) {
     console.log('Original payment_proof_urls:', paymentInvoice.payment_proof_urls);
     console.log('Type:', typeof paymentInvoice.payment_proof_urls);
-    
-    if (typeof paymentInvoice.payment_proof_urls === 'string') {
-      // PostgreSQL returns array as string like: {url1,url2,url3}
-      paymentInvoice.payment_proof_urls = paymentInvoice.payment_proof_urls
-        .replace(/^\{/, '')
-        .replace(/\}$/, '')
-        .split(',')
-        .filter(url => url);
-      console.log('Parsed payment_proof_urls:', paymentInvoice.payment_proof_urls);
-    }
+
+    paymentInvoice.payment_proof_urls = parseArrayField(paymentInvoice.payment_proof_urls);
+    console.log('Parsed payment_proof_urls:', paymentInvoice.payment_proof_urls);
   }
   
   if (shippingInvoice && shippingInvoice.shipping_proof_urls) {
-    if (typeof shippingInvoice.shipping_proof_urls === 'string') {
-      shippingInvoice.shipping_proof_urls = shippingInvoice.shipping_proof_urls
-        .replace(/^\{/, '')
-        .replace(/\}$/, '')
-        .split(',')
-        .filter(url => url);
-    }
+    shippingInvoice.shipping_proof_urls = parseArrayField(shippingInvoice.shipping_proof_urls);
   }
   
   // Fetch chat messages

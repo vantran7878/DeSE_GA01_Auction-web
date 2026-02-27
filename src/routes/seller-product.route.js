@@ -20,18 +20,17 @@ router.get('/', async function (req, res) {
     res.render('vwSeller/dashboard', { stats });
 });
 
-// All Products - View only
-router.get('/products', async function (req, res) {
-    const sellerId = req.session.authUser.id;
-    const products = await productModel.findAllProductsBySellerId(sellerId);
-    res.render('vwSeller/all-products', { products });
-});
-
 const renderSellerProducts = async (req, res, fetchFn, view, extra = {}) => {
     const sellerId = req.session.authUser.id;
     const products = await fetchFn(sellerId);
     res.render(view, { products, ...extra });
 };
+
+// All Products - View only
+router.get('/products', async function (req, res) {
+    await renderSellerProducts(req, res, productModel.findAllProductsBySellerId, 'vwSeller/all-products');
+});
+
 
 // Active Products - CRUD
 router.get('/products/active', async (req, res) => {

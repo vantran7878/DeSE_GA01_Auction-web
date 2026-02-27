@@ -3,6 +3,7 @@ import express from 'express';
 import * as productModel from '../models/product.model.js';
 import * as categoryModel from '../models/category.model.js';
 import * as systemSettingModel from '../models/systemSetting.model.js';
+import { calculatePagination } from './helpers/pagination.helpers.js';
 
 
 const router = express.Router();
@@ -25,6 +26,7 @@ const prepareProductList = async (products) => {
     };
   });
 };
+
 
 router.get('/category', async (req, res) => {
   const userId = req.session.authUser ? req.session.authUser.id : null;
@@ -50,22 +52,12 @@ router.get('/category', async (req, res) => {
   const products = await prepareProductList(list);
   const total = await productModel.countByCategoryIds(categoryIds);
   console.log('Total products in category:', total.count);
-  const totalCount = parseInt(total.count) || 0;
-  const nPages = Math.ceil(totalCount / limit);
-  let from = (page - 1) * limit + 1;
-  let to = page * limit;
-  if (to > totalCount) to = totalCount;
-  if (totalCount === 0) { from = 0; to = 0; }
   res.render('vwProduct/list', { 
     products: products,
-    totalCount,
-    from,
-    to,
-    currentPage: page,
-    totalPages: nPages,
     categoryId: categoryId,
     categoryName: category ? category.name : null,
     sort: sort,
+    ...calculatePagination(total, page, limit)
   });
 });
 
@@ -102,24 +94,13 @@ router.get('/search', async (req, res) => {
   const list = await productModel.searchPageByKeywords(keywords, limit, offset, userId, logic, sort);
   const products = await prepareProductList(list);
   const total = await productModel.countByKeywords(keywords, logic);
-  const totalCount = parseInt(total.count) || 0;
-  
-  const nPages = Math.ceil(totalCount / limit);
-  let from = (page - 1) * limit + 1;
-  let to = page * limit;
-  if (to > totalCount) to = totalCount;
-  if (totalCount === 0) { from = 0; to = 0; }
   
   res.render('vwProduct/list', { 
     products: products,
-    totalCount,
-    from,
-    to,
-    currentPage: page,
-    totalPages: nPages,
     q: q,
     logic: logic,
     sort: sort,
+    ...calculatePagination(total, page, limit)
   });
 });
 export default router;
