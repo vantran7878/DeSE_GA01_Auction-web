@@ -195,37 +195,15 @@
 </div>
 
 {{#section 'js'}}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/static/js/adminDeleteConfirm.js"></script>
 <script>
-function confirmDelete(button) {
-    const userId = button.dataset.userId;
-    const userName = button.dataset.userName;
-    
-    Swal.fire({
-        title: 'Are you sure?',
-        html: `You are about to delete user: <strong>${userName}</strong><br>This action cannot be undone!`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/admin/users/delete';
-            
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'id';
-            input.value = userId;
-            
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
+function confirmDelete(btn) {
+  confirmDeleteEntity(btn, {
+    idAttr: 'userId',
+    nameAttr: 'userName',
+    entityLabel: 'user',
+    actionUrl: '/admin/users/delete'
+  });
 }
 </script>
 {{/section}}

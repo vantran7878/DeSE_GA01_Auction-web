@@ -1,19 +1,6 @@
 <div class="card shadow-sm border-0">
-  <div class="card-body text-center pt-4 pb-3">
-    <div class="position-relative d-inline-block">
-      <img src="https://ui-avatars.com/api/?name={{authUser.fullname}}&background=random&size=128" 
-           class="rounded-circle mb-3 shadow-sm" 
-           width="100" height="100" 
-           style="object-fit: cover;">
-      
-      <span class="position-absolute bottom-0 start-100 translate-middle badge rounded-pill bg-success border border-white text-capitalize">
-        {{authUser.role}}
-      </span>
-    </div>
-
-    <h5 class="card-title fw-bold mb-1">{{authUser.fullname}}</h5>
-    <div class="text-muted small text-break px-3">{{authUser.email}}</div>
-  </div>
+  {{!-- seller avatar --}}
+  {{> user-avatar-card avatarBg="random" badgeClass="bg-success" badgeLabel=authUser.role}}
   
   <div class="list-group list-group-flush profile-nav small">
     

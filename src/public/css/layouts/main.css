@@ -112,6 +112,8 @@ a:hover {
   color: var(--primary-color);
 }
 
+.text-brand        { color: var(--primary-color) !important; }
+
 /*------------ Background Color -----------*/
 .bg-gray {
     background: var(--gray-color);

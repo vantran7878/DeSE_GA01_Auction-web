@@ -1,0 +1,11 @@
+body { background-color: #f4f6f9; }
+.admin-navbar { background-color: #212529; z-index: 1030; }
+.sidebar-container { min-height: calc(100vh - 56px); background-color: #fff; border-right: 1px solid #dee2e6; }
+.admin-main-content { padding: 20px; }
+/* Ensure header and dropdowns appear above everything */
+.site-header { z-index: 9998 !important; }
+.site-header .navbar { z-index: 9998 !important; overflow: visible !important; }
+.site-header .navbar-collapse { overflow: visible !important; }
+.site-header .offcanvas-body { overflow: visible !important; }
+.site-header .dropdown-menu { z-index: 99999 !important; position: absolute !important; }
+.site-header .dropdown-submenu > .dropdown-menu { z-index: 99999 !important; }

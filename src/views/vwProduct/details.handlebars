@@ -1,978 +1,48 @@
 {{#section "css"}}
 <link rel="stylesheet" href="/static/css/product/detail.css">
-<style>
-  /* SweetAlert2 Custom Buttons */
-  .swal-btn-confirm,
-  .swal-btn-cancel {
-    min-width: 120px !important;
-    padding: 12px 32px !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    border-radius: 8px !important;
-    transition: all 0.3s ease !important;
-    border: none !important;
-  }
-  
-  .swal-btn-confirm {
-    background: linear-gradient(135deg, #72AEC8 0%, #5a9bb8 100%) !important;
-    color: white !important;
-  }
-  
-  .swal-btn-confirm:hover {
-    background: linear-gradient(135deg, #5a9bb8 0%, #4a8aa8 100%) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 12px rgba(114, 174, 200, 0.4) !important;
-  }
-  
-  .swal-btn-confirm:active {
-    transform: translateY(0) !important;
-  }
-  
-  .swal-btn-cancel {
-    background: #6c757d !important;
-    color: white !important;
-  }
-  
-  .swal-btn-cancel:hover {
-    background: #5a6268 !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  }
-  
-  .swal-btn-cancel:active {
-    transform: translateY(0) !important;
-  }
-
-  /* Bid Modal Enhancements */
-  #decreaseBid:hover,
-  #increaseBid:hover {
-    background-color: #72AEC8 !important;
-    color: white !important;
-    border-color: #72AEC8 !important;
-    transform: scale(1.05);
-  }
-
-  #decreaseBid:active,
-  #increaseBid:active {
-    transform: scale(0.95);
-    background-color: #5a9bb8 !important;
-  }
-
-  #submitBidBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(114, 174, 200, 0.4) !important;
-  }
-
-  #submitBidBtn:active {
-    transform: translateY(0);
-  }
-
-  #bidModal .btn-outline-secondary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  #bidAmount {
-    transition: all 0.3s ease;
-  }
-
-  #bidAmount:focus {
-    box-shadow: 0 0 0 0.2rem rgba(114, 174, 200, 0.25);
-  }
-  
-  /* Quick increment buttons */
-  .quick-increment:hover,
-  .quick-decrement:hover {
-    transform: scale(1.05);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-  }
-  
-  .quick-increment:active,
-  .quick-decrement:active {
-    transform: scale(0.95);
-  }
-
-  /* Prevent layout shift when modal opens */
-  body.modal-open {
-    padding-right: 0 !important;
-  }
-</style>
+<link rel="stylesheet" href="/static/css/product/auction-custom.css">
 {{/section}}
 
 {{#section "js"}}
+
+<!-- Truyền dữ liệu từ Handlebars-->
 <script>
-  // Gallery Carousel Navigation - Chuyển ảnh chính
-  function galleryNext() {
-    const thumbnails = document.querySelectorAll('.gallery-thumb');
-    if (thumbnails.length > 0) {
-      const nextIndex = (currentImageIndex + 1) % thumbnails.length;
-      thumbnails[nextIndex].click();
-    }
-  }
-
-  function galleryPrev() {
-    const thumbnails = document.querySelectorAll('.gallery-thumb');
-    if (thumbnails.length > 0) {
-      const prevIndex = (currentImageIndex - 1 + thumbnails.length) % thumbnails.length;
-      thumbnails[prevIndex].click();
-    }
-  }
-
-  // Gallery images data
+  // Biến galleryImages
   const galleryImages = [
-    {{#if product.thumbnail}}'/static/{{product.thumbnail}}'{{else}} 'https://placehold.co/800x800?text=Image+1'{{/if}},
-  {{#each product.sub_images}}
-  '/static/{{this}}',
-    {{/each}}
+    {{#if product.thumbnail}}'/static/{{product.thumbnail}}'{{else}}'https://placehold.co/800x800?text=Image+1'{{/if}},
+    {{#each product.sub_images}}'/static/{{this}}',{{/each}}
   ];
 
-  let currentImageIndex = 0;
+  // Tất cả dữ liệu server cần thiết cho các JS module
+  window.PRODUCT_DATA = {
+    currentPrice:    {{ product.current_price }},
+    productId:       {{ product.id }},
+    minIncrement:    {{ product.step_price }},
+    isAuthenticated: {{#if isAuthenticated}}true{{else}}false{{/if}},
+    detailUrl:       '/products/detail?id={{product.id}}',
+    productStatus:   '{{productStatus}}',
+  };
+</script>
 
-  function changeMainImage(element, index) {
-    // Lấy ảnh từ thumbnail
-    const imgSrc = element.querySelector('img').src;
+<!-- Load các JS module  -->
+<script src="/static/js/product-gallery.js"></script>
+<script src="/static/js/product-bidding.js"></script>
+<script src="/static/js/product-comment.js"></script>
+<script src="/static/js/product-bidder-management.js"></script>
+<script src="/static/js/product-countdown.js"></script>
+<script src="/static/js/product-rating.js"></script>
+<script src="/static/js/product-buynow.js"></script>
 
-    // Update ảnh chính
-    document.getElementById('mainImage').src = imgSrc;
-    currentImageIndex = index;
-
-    // Update class active
-    document.querySelectorAll('.gallery-thumb').forEach(thumb => {
-      thumb.classList.remove('active');
-    });
-    element.classList.add('active');
-  }
-
-  function openLightbox(index) {
-    currentImageIndex = index;
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImage = document.getElementById('lightboxImage');
-
-    lightboxImage.src = galleryImages[index];
-    document.getElementById('currentImageNum').textContent = index + 1;
-    lightbox.style.display = 'flex';
-
-    // Disable body scroll
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeLightbox() {
-    const lightbox = document.getElementById('lightbox');
-    lightbox.style.display = 'none';
-    document.body.style.overflow = 'auto';
-  }
-
-  function nextImage() {
-    currentImageIndex = (currentImageIndex + 1) % galleryImages.length;
-    document.getElementById('lightboxImage').src = galleryImages[currentImageIndex];
-    document.getElementById('currentImageNum').textContent = currentImageIndex + 1;
-  }
-
-  function prevImage() {
-    currentImageIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
-    document.getElementById('lightboxImage').src = galleryImages[currentImageIndex];
-    document.getElementById('currentImageNum').textContent = currentImageIndex + 1;
-  }
-
-  // Keyboard navigation
-  document.addEventListener('keydown', function (event) {
-    const lightbox = document.getElementById('lightbox');
-    if (lightbox.style.display === 'flex') {
-      if (event.key === 'ArrowLeft') prevImage();
-      if (event.key === 'ArrowRight') nextImage();
-      if (event.key === 'Escape') closeLightbox();
-    }
-  });
-
-  // Click on main image to open lightbox - Wait for DOM
-  window.addEventListener('load', function () {
-    const mainImage = document.getElementById('mainImage');
-    if (mainImage) {
-      mainImage.addEventListener('click', function () {
-        openLightbox(currentImageIndex);
-      });
-    }
-  });
-
-  // Toggle Description Section
-  function toggleDescription() {
-    const descContent = document.getElementById('descriptionContent');
-    const descToggle = document.getElementById('descriptionToggle');
-    const isHidden = descContent.style.display === 'none';
-
-    descContent.style.display = isHidden ? 'block' : 'none';
-    descToggle.innerHTML = isHidden
-      ? '<i class="bi bi-chevron-up"></i>'
-      : '<i class="bi bi-chevron-down"></i>';
-  }
-
-  // Toggle Details Section
-  function toggleDetails() {
-    const detailsContent = document.getElementById('detailsContent');
-    const detailsToggle = document.getElementById('detailsToggle');
-    const isHidden = detailsContent.style.display === 'none';
-
-    detailsContent.style.display = isHidden ? 'block' : 'none';
-    detailsToggle.innerHTML = isHidden
-      ? '<i class="bi bi-chevron-up"></i>'
-      : '<i class="bi bi-chevron-down"></i>';
-  }
-
-  // ==================== BID FUNCTIONALITY ====================
-  const bidModal = new bootstrap.Modal(document.getElementById('bidModal'));
-  const currentPrice = {{ product.current_price }};
-  const productId = {{ product.id }};
-  const minIncrement = {{ product.step_price }}; // VND
-
-  // Format number with commas
-  function formatNumberWithCommas(num) {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  }
-
-  // Remove commas from formatted number
-  function removeCommas(str) {
-    return str.replace(/,/g, '');
-  }
-
-  // Open bid modal
-  document.querySelector('.btn-place-bid')?.addEventListener('click', function () {
-    {{#if isAuthenticated}}
-      const suggestedBid = currentPrice + minIncrement;
-      const bidInput = document.getElementById('bidAmount');
-      bidInput.value = formatNumberWithCommas(suggestedBid);
-      bidInput.setAttribute('data-raw-value', suggestedBid);
-      bidModal.show();
-    {{else}}
-      window.location.href = '/account/signin?retUrl=/products/detail?id={{product.id}}';
-    {{/if}}
-  });
-
-  // Long-press functionality
-  let pressTimer = null;
-  let isLongPress = false;
-  
-  function adjustBid(amount) {
-    const bidInput = document.getElementById('bidAmount');
-    let currentBid = parseInt(bidInput.getAttribute('data-raw-value')) || (currentPrice + minIncrement);
-    const minBid = currentPrice + minIncrement;
-    const newBid = Math.max(minBid, currentBid + amount);
-
-    bidInput.setAttribute('data-raw-value', newBid);
-    bidInput.value = formatNumberWithCommas(newBid);
-    bidInput.setCustomValidity('');
-  }
-  
-  function startPressIncrease() {
-    isLongPress = false;
-    pressTimer = setTimeout(() => {
-      isLongPress = true;
-      repeatIncrease();
-    }, 500); // Start repeating after 500ms
-  }
-  
-  function startPressDecrease() {
-    isLongPress = false;
-    pressTimer = setTimeout(() => {
-      isLongPress = true;
-      repeatDecrease();
-    }, 500);
-  }
-  
-  function stopPress() {
-    clearTimeout(pressTimer);
-    clearInterval(repeatInterval);
-  }
-  
-  let repeatInterval = null;
-  
-  function repeatIncrease() {
-    adjustBid(minIncrement);
-    repeatInterval = setInterval(() => {
-      adjustBid(minIncrement);
-    }, 100); // Repeat every 100ms
-  }
-  
-  function repeatDecrease() {
-    adjustBid(-minIncrement);
-    repeatInterval = setInterval(() => {
-      adjustBid(-minIncrement);
-    }, 100);
-  }
-
-  // Handle increase bid button
-  const increaseBtn = document.getElementById('increaseBid');
-  increaseBtn?.addEventListener('mousedown', startPressIncrease);
-  increaseBtn?.addEventListener('mouseup', function() {
-    stopPress();
-    if (!isLongPress) {
-      adjustBid(minIncrement);
-    }
-  });
-  increaseBtn?.addEventListener('mouseleave', stopPress);
-  increaseBtn?.addEventListener('touchstart', startPressIncrease);
-  increaseBtn?.addEventListener('touchend', function() {
-    stopPress();
-    if (!isLongPress) {
-      adjustBid(minIncrement);
-    }
-  });
-
-  // Handle decrease bid button
-  const decreaseBtn = document.getElementById('decreaseBid');
-  decreaseBtn?.addEventListener('mousedown', startPressDecrease);
-  decreaseBtn?.addEventListener('mouseup', function() {
-    stopPress();
-    if (!isLongPress) {
-      adjustBid(-minIncrement);
-    }
-  });
-  decreaseBtn?.addEventListener('mouseleave', stopPress);
-  decreaseBtn?.addEventListener('touchstart', startPressDecrease);
-  decreaseBtn?.addEventListener('touchend', function() {
-    stopPress();
-    if (!isLongPress) {
-      adjustBid(-minIncrement);
-    }
-  });
-  
-  // Handle quick increment buttons
-  document.querySelectorAll('.quick-increment').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const multiplier = parseInt(this.getAttribute('data-multiplier'));
-      adjustBid(minIncrement * multiplier);
-    });
-  });
-  
-  // Handle quick decrement buttons
-  document.querySelectorAll('.quick-decrement').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const multiplier = parseInt(this.getAttribute('data-multiplier'));
-      adjustBid(-minIncrement * multiplier);
-    });
-  });
-
-  // Format bid input on user input (keep for manual typing if needed)
-  document.getElementById('bidAmount')?.addEventListener('input', function (e) {
-    let value = removeCommas(this.value);
-
-    // Remove non-numeric characters
-    value = value.replace(/[^\d]/g, '');
-
-    if (value === '') {
-      this.value = '';
-      this.setAttribute('data-raw-value', '0');
-      return;
-    }
-
-    const numValue = parseInt(value);
-    this.setAttribute('data-raw-value', numValue);
-    this.value = formatNumberWithCommas(numValue);
-
-    // Validation
-    const minBid = currentPrice + minIncrement;
-    if (numValue && numValue < minBid) {
-      this.setCustomValidity('Giá đấu phải ít nhất ' + formatNumberWithCommas(minBid) + ' VND');
-    } else {
-      this.setCustomValidity('');
-    }
-  });
-
-  // Handle confirmation checkbox for bid
-  const confirmBidCheckbox = document.getElementById('confirmBidCheckbox');
-  const submitBidBtn = document.getElementById('submitBidBtn');
-  
-  if (confirmBidCheckbox && submitBidBtn) {
-    confirmBidCheckbox.addEventListener('change', function() {
-      if (this.checked) {
-        submitBidBtn.disabled = false;
-        submitBidBtn.style.opacity = '1';
-      } else {
-        submitBidBtn.disabled = true;
-        submitBidBtn.style.opacity = '0.6';
-      }
-    });
-    
-    // Reset checkbox when modal is closed
-    document.getElementById('bidModal')?.addEventListener('hidden.bs.modal', function() {
-      confirmBidCheckbox.checked = false;
-      submitBidBtn.disabled = true;
-      submitBidBtn.style.opacity = '0.6';
-    });
-  }
-
-  // Handle bid form submission - Server-side rendering
-  document.getElementById('bidForm')?.addEventListener('submit', function (e) {
-    const bidInput = document.getElementById('bidAmount');
-    const rawValue = bidInput.getAttribute('data-raw-value');
-
-    // Set the raw value (without commas) to a hidden input
-    const hiddenInput = document.getElementById('bidAmountRaw');
-    if (hiddenInput) {
-      hiddenInput.value = rawValue || removeCommas(bidInput.value);
-    }
-    // Disable submit button to prevent double submission
-    const submitBtn = document.getElementById('submitBidBtn');
-    submitBtn.disabled = true;
-    submitBtn.classList.add('processing');
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-
-    // Form will submit normally to server
-  });
-
-  // ==================== COMMENT FORM SUBMISSION PROTECTION ====================
-  const commentForm = document.querySelector('.comment-form form');
-  if (commentForm) {
-    commentForm.addEventListener('submit', function(e) {
-      const submitBtn = this.querySelector('button[type="submit"]');
-      
-      // Prevent double submission
-      if (submitBtn.disabled) {
-        e.preventDefault();
-        return false;
-      }
-      
-      // Disable button and show loading state
-      submitBtn.disabled = true;
-      const originalHTML = submitBtn.innerHTML;
-      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Posting...';
-      
-      // Re-enable after a delay (in case of server error and no redirect)
-      setTimeout(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalHTML;
-      }, 3000);
-    });
-  }
-
-  // ==================== COMMENT REPLY FUNCTIONALITY ====================
-  document.querySelectorAll('.reply-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const commentId = this.getAttribute('data-comment-id');
-      const userName = this.getAttribute('data-user-name');
-      const replyForm = document.getElementById(`reply-form-${commentId}`);
-      const replyInput = replyForm.querySelector('.reply-input');
-
-      // Pre-fill with colored @username (using HTML)
-      if (userName && replyInput) {
-        replyInput.innerHTML = `<span class="mention">@${userName}</span>&nbsp;`;
-        replyInput.focus();
-        // Move cursor to end
-        const range = document.createRange();
-        const sel = window.getSelection();
-        range.selectNodeContents(replyInput);
-        range.collapse(false);
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-
-      replyForm.style.display = 'block';
-      this.style.display = 'none';
-    });
-  });
-
-  document.querySelectorAll('.cancel-reply').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const commentId = this.getAttribute('data-comment-id');
-      const replyForm = document.getElementById(`reply-form-${commentId}`);
-      const replyBtn = document.querySelector(`.reply-btn[data-comment-id="${commentId}"]`);
-      const replyInput = replyForm.querySelector('.reply-input');
-
-      // Clear editor content
-      if (replyInput) {
-        replyInput.innerHTML = '';
-      }
-
-      replyForm.style.display = 'none';
-      replyBtn.style.display = 'inline-block';
-    });
-  });
-
-  // ==================== SYNC CONTENTEDITABLE TO HIDDEN INPUT ====================
-  document.querySelectorAll('.reply-input').forEach(editor => {
-    // Sync to hidden input on form submit
-    const form = editor.closest('form');
-    if (form) {
-      form.addEventListener('submit', function (e) {
-        const submitBtn = form.querySelector('button[type="submit"]');
-        
-        // Prevent double submission
-        if (submitBtn && submitBtn.disabled) {
-          e.preventDefault();
-          return false;
-        }
-        
-        const hiddenInput = form.querySelector('.reply-content-hidden');
-        if (hiddenInput) {
-          hiddenInput.value = editor.textContent;
-        }
-        
-        // Disable button and show loading state
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          const originalHTML = submitBtn.innerHTML;
-          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
-          
-          // Re-enable after delay
-          setTimeout(() => {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalHTML;
-          }, 3000);
-        }
-      });
-    }
-  });
-
-  // ==================== REJECT BIDDER FUNCTIONALITY ====================
-  document.addEventListener('DOMContentLoaded', function() {
-    const rejectButtons = document.querySelectorAll('.reject-bidder-btn');
-    
-    rejectButtons.forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const bidderId = this.getAttribute('data-bidder-id');
-        const bidderName = this.getAttribute('data-bidder-name');
-        const productId = {{product.id}};
-        
-        // Show confirmation modal with SweetAlert2
-        Swal.fire({
-          title: 'Reject Bidder?',
-          html: `Are you sure you want to reject bidder <strong>"${bidderName}"</strong>?<br><br>This bidder will not be able to bid on this product anymore.`,
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#dc3545',
-          cancelButtonColor: '#6c757d',
-          confirmButtonText: 'Yes, reject',
-          cancelButtonText: 'Cancel'
-        }).then((result) => {
-          if (result.isConfirmed) {
-            // Show loading state
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            
-            // Send reject request
-            fetch('/products/reject-bidder', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                productId: productId,
-                bidderId: bidderId
-              })
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire({
-                  title: 'Rejected!',
-                  text: 'The bidder has been rejected successfully.',
-                  icon: 'success',
-                  confirmButtonColor: '#72AEC8'
-                }).then(() => {
-                  window.location.reload();
-                });
-              } else {
-                Swal.fire({
-                  title: 'Error!',
-                  text: data.message || 'Unable to reject bidder.',
-                  icon: 'error',
-                  confirmButtonColor: '#72AEC8'
-                });
-                this.disabled = false;
-                this.innerHTML = '<i class="bi bi-x-circle"></i>';
-              }
-            })
-            .catch(error => {
-              console.error('Error:', error);
-              Swal.fire({
-                title: 'Error!',
-                text: 'An error occurred while rejecting the bidder.',
-                icon: 'error',
-                confirmButtonColor: '#72AEC8'
-              });
-              this.disabled = false;
-              this.innerHTML = '<i class="bi bi-x-circle"></i>';
-            });
-          }
-        });
-      });
-    });
-  });
-
-  // ==================== UNREJECT BIDDER FUNCTIONALITY ====================
-  document.addEventListener('DOMContentLoaded', function() {
-    const unrejectButtons = document.querySelectorAll('.unreject-bidder-btn');
-    
-    unrejectButtons.forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const bidderId = this.getAttribute('data-bidder-id');
-        const bidderName = this.getAttribute('data-bidder-name');
-        const productId = {{product.id}};
-        
-        // Show confirmation modal with SweetAlert2
-        Swal.fire({
-          title: 'Unban Bidder?',
-          html: `Allow <strong>"${bidderName}"</strong> to bid on this product again?`,
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonColor: '#28a745',
-          cancelButtonColor: '#6c757d',
-          confirmButtonText: 'Yes, allow',
-          cancelButtonText: 'Cancel'
-        }).then((result) => {
-          if (result.isConfirmed) {
-            // Show loading state
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            
-            // Send unreject request
-            fetch('/products/unreject-bidder', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                productId: productId,
-                bidderId: bidderId
-              })
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                // Keep spinner spinning until page reloads
-                Swal.fire({
-                  title: 'Unbanned!',
-                  text: 'The bidder can now bid on this product again.',
-                  icon: 'success',
-                  confirmButtonColor: '#72AEC8'
-                }).then(() => {
-                  window.location.reload();
-                });
-              } else {
-                Swal.fire({
-                  title: 'Error!',
-                  text: data.message || 'Unable to unban bidder.',
-                  icon: 'error',
-                  confirmButtonColor: '#72AEC8'
-                });
-                this.disabled = false;
-                this.innerHTML = '<i class="bi bi-check-circle"></i>';
-              }
-            })
-            .catch(error => {
-              console.error('Error:', error);
-              Swal.fire({
-                title: 'Error!',
-                text: 'An error occurred while unbanning the bidder.',
-                icon: 'error',
-                confirmButtonColor: '#72AEC8'
-              });
-              this.disabled = false;
-              this.innerHTML = '<i class="bi bi-check-circle"></i> Unban';
-            });
-          }
-        });
-      });
-    });
-  });
-
-  // ==================== SMART COUNTDOWN FUNCTIONALITY ====================
-  let countdownEnded = false; // Flag to prevent multiple reloads
-  
-  function updateSmartCountdown() {
-    const countdownElement = document.querySelector('.countdown-timer');
-    if (!countdownElement) return;
-    
-    const endDate = new Date(countdownElement.getAttribute('data-end-date'));
-    const now = new Date();
-    const timeLeft = endDate - now;
-    
-    if (timeLeft <= 0) {
-      countdownElement.textContent = 'Auction Ended';
-      countdownElement.classList.remove('text-danger');
-      countdownElement.classList.add('text-muted');
-      
-      // Auto-reload page when countdown ends (only once)
-      if (!countdownEnded) {
-        countdownEnded = true;
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000); // Wait 1 second before reload
-      }
-      return;
-    }
-    
-    const THREE_DAYS_IN_MS = 3 * 24 * 60 * 60 * 1000;
-    
-    // If more than 3 days, show end date/time only
-    if (timeLeft > THREE_DAYS_IN_MS) {
-      const dateOptions = { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric'
-      };
-      const timeOptions = {
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true
-      };
-      
-      const dateStr = endDate.toLocaleDateString('en-US', dateOptions);
-      const timeStr = endDate.toLocaleTimeString('en-US', timeOptions);
-      
-      // Display on two lines
-      countdownElement.innerHTML = `${dateStr}<br>${timeStr}`;
-      countdownElement.classList.remove('text-danger');
-      countdownElement.classList.add('text-primary');
-      
-      // Update label
-      const labelElement = countdownElement.closest('.info-box').querySelector('small.text-muted');
-      if (labelElement) {
-        labelElement.textContent = 'Ends at';
-      }
-    } else {
-      // 3 days or less: show real-time countdown
-      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-      
-      let timeString = '';
-      if (days > 0) {
-        timeString = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-      } else if (hours > 0) {
-        timeString = `${hours}h ${minutes}m ${seconds}s`;
-      } else if (minutes > 0) {
-        timeString = `${minutes}m ${seconds}s`;
-      } else {
-        timeString = `${seconds}s`;
-      }
-      
-      countdownElement.textContent = timeString;
-      countdownElement.classList.remove('text-primary');
-      countdownElement.classList.add('text-danger');
-      
-      // Update label
-      const labelElement = countdownElement.closest('.info-box').querySelector('small.text-muted');
-      if (labelElement) {
-        labelElement.textContent = 'Time Left';
-      }
-      
-      // Extra urgency for last hour
-      if (days === 0 && hours < 1) {
-        countdownElement.classList.add('fw-bold');
-      }
-    }
-  }
-  
-  // Update immediately and then every second
+<!-- Khởi tạo -->
+<script>
   document.addEventListener('DOMContentLoaded', function() {
     {{#if (eq productStatus "ACTIVE")}}
-      // Only run countdown for ACTIVE products
-      updateSmartCountdown();
-      setInterval(updateSmartCountdown, 1000);
+      // Chỉ khởi động countdown cho sản phẩm đang đấu giá
+      initProductCountdown();
     {{/if}}
   });
-
-  // ==================== SELLER RATINGS MODAL ====================
-  function openSellerRatingsModal(sellerId, sellerName) {
-    // Update modal title
-    document.getElementById('sellerNameTitle').textContent = sellerName + "'s Ratings";
-    
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('sellerRatingsModal'));
-    modal.show();
-    
-    // Show loading, hide others
-    document.getElementById('ratingsLoading').style.display = 'block';
-    document.getElementById('ratingsError').style.display = 'none';
-    document.getElementById('ratingsContent').style.display = 'none';
-    
-    // Fetch ratings data
-    fetch(`/products/api/seller-ratings/${sellerId}`)
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to fetch');
-        return response.json();
-      })
-      .then(data => {
-        // Hide loading
-        document.getElementById('ratingsLoading').style.display = 'none';
-        document.getElementById('ratingsContent').style.display = 'block';
-        
-        // Update statistics
-        const ratingPoint = data.rating_point || 0;
-        const ratingPercentage = ratingPoint === 1 ? '100.00%' : (ratingPoint * 100).toFixed(2) + '%';
-        document.getElementById('overallRating').textContent = ratingPercentage;
-        document.getElementById('totalReviewsCount').textContent = data.totalReviews || 0;
-        document.getElementById('positiveCount').textContent = data.positiveReviews || 0;
-        document.getElementById('negativeCount').textContent = data.negativeReviews || 0;
-        document.getElementById('totalReviewsText').textContent = `Based on ${data.totalReviews || 0} review(s)`;
-        
-        // Display reviews
-        const reviewsList = document.getElementById('reviewsList');
-        const emptyState = document.getElementById('emptyState');
-        
-        if (data.reviews && data.reviews.length > 0) {
-          reviewsList.innerHTML = data.reviews.map(review => `
-            <div class="card mb-3 border-0" style="background: ${review.rating === 1 ? 'rgba(40, 167, 69, 0.05)' : 'rgba(220, 53, 69, 0.05)'}; border-left: 4px solid ${review.rating === 1 ? '#28a745' : '#dc3545'} !important;">
-              <div class="card-body">
-                <div class="row align-items-start">
-                  <div class="col-md-3 mb-2 mb-md-0">
-                    <div class="d-flex align-items-center">
-                      <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
-                        <i class="bi bi-person-fill"></i>
-                      </div>
-                      <div>
-                        <div class="fw-bold small">${review.reviewer_name}</div>
-                        <small class="text-muted">${new Date(review.created_at).toLocaleDateString()}</small>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-4 mb-2 mb-md-0">
-                    <small class="text-muted d-block mb-1">Product</small>
-                    <div class="fw-500 small">
-                      <i class="bi bi-box-seam me-1"></i>${review.product_name}
-                    </div>
-                  </div>
-                  <div class="col-md-2 mb-2 mb-md-0">
-                    <span class="badge ${review.rating === 1 ? 'bg-success' : 'bg-danger'} px-2 py-1">
-                      <i class="bi bi-hand-thumbs-${review.rating === 1 ? 'up' : 'down'}-fill me-1"></i>
-                      ${review.rating === 1 ? 'Positive' : 'Negative'}
-                    </span>
-                  </div>
-                  <div class="col-md-3">
-                    ${review.comment ? `
-                      <div class="bg-white p-2 rounded">
-                        <small class="text-muted d-block mb-1">
-                          <i class="bi bi-chat-left-quote-fill me-1"></i>Comment
-                        </small>
-                        <p class="mb-0 small">${review.comment}</p>
-                      </div>
-                    ` : '<small class="text-muted fst-italic">No comment</small>'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          `).join('');
-          emptyState.style.display = 'none';
-        } else {
-          reviewsList.innerHTML = '';
-          emptyState.style.display = 'block';
-        }
-      })
-      .catch(error => {
-        console.error('Error loading ratings:', error);
-        document.getElementById('ratingsLoading').style.display = 'none';
-        document.getElementById('ratingsError').style.display = 'block';
-      });
-  }
-
-  // ==================== BUY NOW FUNCTIONALITY ====================
-  document.querySelector('.btn-buy-now')?.addEventListener('click', function() {
-    {{#if isAuthenticated}}
-      const productId = this.getAttribute('data-product-id');
-      const buyNowPrice = parseFloat(this.getAttribute('data-buy-now-price'));
-      const formattedPrice = buyNowPrice.toLocaleString('vi-VN');
-
-      Swal.fire({
-        title: '<strong>Confirm Buy Now Purchase</strong>',
-        icon: 'warning',
-        html: `
-          <div style="text-align: left; padding: 10px;">
-            <p class="mb-3"><strong>Are you sure you want to purchase this product now?</strong></p>
-            <div class="alert alert-info" style="font-size: 0.95rem;">
-              <i class="bi bi-info-circle-fill"></i> <strong>Important Information:</strong>
-              <ul style="margin-top: 10px; margin-bottom: 0;">
-                <li>Product will be purchased at <strong>${formattedPrice} VND</strong></li>
-                <li>The auction will <strong>end immediately</strong></li>
-                <li>Product status will change to <strong>pending payment</strong></li>
-                <li>You must complete the payment process</li>
-              </ul>
-            </div>
-            <div class="alert alert-warning" style="font-size: 0.9rem; margin-bottom: 0;">
-              <i class="bi bi-exclamation-triangle-fill"></i> <strong>Warning:</strong> 
-              If you do not complete payment, the seller may give you a <strong class="text-danger">negative rating</strong>, 
-              which could affect your ability to bid in future auctions.
-            </div>
-          </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'Cancel',
-        width: '600px',
-        buttonsStyling: false,
-        customClass: {
-          confirmButton: 'swal-btn-confirm',
-          cancelButton: 'swal-btn-cancel',
-          actions: 'd-flex justify-content-center gap-3'
-        }
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // Show loading
-          Swal.fire({
-            title: 'Processing...',
-            html: 'Please wait while we process your purchase.',
-            allowOutsideClick: false,
-            didOpen: () => {
-              Swal.showLoading();
-            }
-          });
-
-          // Send buy now request
-          fetch('/products/buy-now', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ productId: productId })
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                html: data.message,
-                confirmButtonColor: '#72AEC8',
-                confirmButtonText: 'Proceed to Payment'
-              }).then(() => {
-                if (data.redirectUrl) {
-                  window.location.href = data.redirectUrl;
-                } else {
-                  window.location.reload();
-                }
-              });
-            } else {
-              Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.message || 'Failed to purchase product',
-                confirmButtonColor: '#72AEC8'
-              });
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'An error occurred. Please try again.',
-              confirmButtonColor: '#72AEC8'
-            });
-          });
-        }
-      });
-    {{else}}
-      window.location.href = '/account/signin?retUrl=/products/detail?id={{product.id}}';
-    {{/if}}
-  });
-
 </script>
+
 {{/section}}
 
 <div class="container mb-5">
@@ -1141,7 +211,7 @@
               <small class="text-muted d-block mb-2 fw-500">Buy Now Price</small>
               {{#if product.buy_now_price}}
               <div class="d-flex align-items-baseline gap-2">
-                <h2 class="fw-bold mb-0" style="color: #72AEC8;">{{format_number product.buy_now_price}}</h2>
+                <h2 class="fw-bold mb-0 text-brand">{{format_number product.buy_now_price}}</h2>
                 <span class="text-muted">VND</span>
               </div>
               {{else}}
@@ -1242,10 +312,18 @@
       <!-- Action Buttons -->
       <div class="action-buttons mb-4">
         <div class="d-grid gap-2 d-md-flex">
+          {{!-- 1. NHÓM TRẠNG THÁI ĐÃ KẾT THÚC (SOLD, EXPIRED, CANCELLED) --}}
+          {{#if isAuctionEnded}}
+            <button class="btn btn-lg flex-fill fw-bold" disabled>
+              <i class="bi bi-{{endedStatusIcon}}"></i> 
+              {{#if (eq productStatus "SOLD")}} Product Sold {{/if}}
+              {{#if (eq productStatus "EXPIRED")}} Auction Expired {{/if}}
+              {{#if (eq productStatus "CANCELLED")}} Auction Cancelled {{/if}}
+            </button>
 
-          {{!-- PENDING: Show Payment Button for Highest Bidder and Seller --}}
-          {{#if (eq productStatus "PENDING")}}
-            {{#if showPaymentButton}}
+          {{!-- 2. TRẠNG THÁI CHỜ THANH TOÁN (PENDING) --}}
+          {{else if (eq productStatus "PENDING")}}
+            {{#if showPayButton}}
               <a href="/products/complete-order?id={{product.id}}" class="btn btn-lg flex-fill fw-bold btn-success">
                 <i class="bi bi-credit-card"></i> Go to Payment
               </a>
@@ -1254,57 +332,29 @@
                 <i class="bi bi-lock-fill"></i> Auction Ended - Pending Payment
               </button>
             {{/if}}
-          
-          {{!-- SOLD/EXPIRED/CANCELLED: Disable All Actions --}}
-          {{else if (or (eq productStatus "SOLD") (eq productStatus "EXPIRED") (eq productStatus "CANCELLED"))}}
-            <button class="btn btn-lg flex-fill fw-bold" disabled>
-              {{#if (eq productStatus "SOLD")}}
-                <i class="bi bi-check-circle-fill"></i> Product Sold
-              {{else if (eq productStatus "EXPIRED")}}
-                <i class="bi bi-x-circle-fill"></i> Auction Expired
-              {{else}}
-                <i class="bi bi-ban-fill"></i> Auction Cancelled
-              {{/if}}
-            </button>
-          
-          {{!-- ACTIVE: Normal Bidding --}}
+
+          {{!-- 3. TRẠNG THÁI HOẠT ĐỘNG (ACTIVE) --}}
           {{else}}
-            {{!-- Nút Place Bid --}}
-            <button class="btn btn-lg flex-fill fw-bold btn-place-bid"
-              {{#if (and isAuthenticated (eq authUser.id product.seller_id))}}disabled{{/if}}>
+            {{!-- Nút Đấu giá / Mua ngay --}}
+            <button class="btn btn-lg flex-fill fw-bold btn-place-bid" {{#if isOwnerActive}}disabled{{/if}}>
               <i class="bi bi-hammer"></i> Place Bid
             </button>
+
+            {{!-- Nút Watchlist --}}
             {{#if isAuthenticated}}
-            {{#if product.is_favorite}}
-            <form action="/products/watchlist?_method=DELETE" method="POST" class="flex-fill">
-              <input type="hidden" name="productId" value="{{product.id}}">
-              <button type="submit" class="btn btn-lg w-100 fw-bold btn-watch text-danger" title="Remove from Watchlist">
-                <i class="bi bi-heart-fill"></i> Watching
-              </button>
-            </form>
-
+              <form action="/products/watchlist{{#if product.is_favorite}}?_method=DELETE{{/if}}" method="POST" class="flex-fill">
+                <input type="hidden" name="productId" value="{{product.id}}">
+                <button type="submit" class="btn btn-lg w-100 fw-bold {{#if product.is_favorite}}btn-watch text-danger{{else}}btn-watch{{/if}}">
+                  <i class="bi bi-heart{{#if product.is_favorite}}-fill{{/if}}"></i> 
+                  {{#if product.is_favorite}}Watching{{else}}Watch{{/if}}
+                </button>
+              </form>
             {{else}}
-            {{!-- TRƯỜNG HỢP 2: CHƯA THÍCH -> Form POST --}}
-            <form action="/products/watchlist" method="POST" class="flex-fill">
-              <input type="hidden" name="productId" value="{{product.id}}">
-              <button type="submit" class="btn btn-lg w-100 fw-bold btn-watch" title="Add to Watchlist">
-                <i class="bi bi-heart"></i> Watch
-              </button>
-            </form>
-            {{/if}}
-
-            {{else}}
-            {{!--
-            TRƯỜNG HỢP 3: CHƯA ĐĂNG NHẬP
-            Giữ nguyên giao diện nút nhưng chuyển thành thẻ <a> để dẫn tới trang signin
-              --}}
-              <a href="/account/signin?retUrl=/products/detail/{{product.id}}"
-                class="btn btn-lg flex-fill fw-bold btn-watch d-flex align-items-center justify-content-center text-decoration-none">
+              <a href="/account/signin?retUrl=/products/detail/{{product.id}}" class="btn btn-lg flex-fill fw-bold btn-watch">
                 <i class="bi bi-heart me-2"></i> Watch
               </a>
-              {{/if}}
+            {{/if}}
           {{/if}}
-
         </div>
       </div>
 
@@ -1335,7 +385,7 @@
       <!-- Seller Info -->
       <div class="seller-info p-4 rounded-4 border bg-white">
         <h6 class="fw-bold mb-3">
-          <i class="bi bi-shop" style="color: #72AEC8;"></i> Seller Information
+          <i class="bi bi-shop text-brand"></i> Seller Information
         </h6>
         <h5 class="fw-bold mb-2">{{product.seller_name}}</h5>
         
@@ -1377,7 +427,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4" onclick="toggleDescription()"
           style="cursor: pointer;">
           <h3 class="fw-bold mb-0">
-            <i class="bi bi-file-text" style="color: #72AEC8;"></i> Product Description
+            <i class="bi bi-file-text text-brand"></i> Product Description
           </h3>
           <button id="descriptionToggle" class="btn btn-link p-0" style="color: #72AEC8; text-decoration: none;">
             <i class="bi bi-chevron-up"></i>
@@ -1414,7 +464,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4" onclick="toggleDetails()"
           style="cursor: pointer;">
           <h3 class="fw-bold mb-0">
-            <i class="bi bi-info-circle" style="color: #72AEC8;"></i> Product Details
+            <i class="bi bi-info-circle text-brand"></i> Product Details
           </h3>
           <button id="detailsToggle" class="btn btn-link p-0" style="color: #72AEC8; text-decoration: none;">
             <i class="bi bi-chevron-up"></i>
@@ -1444,7 +494,7 @@
                 </tr>
                 <tr>
                   <td class="fw-bold text-muted">Starting Price</td>
-                  <td class="fw-bold" style="color: #72AEC8;">{{format_number product.starting_price}} VND</td>
+                  <td class="fw-bold text-brand">{{format_number product.starting_price}} VND</td>
                 </tr>
               </tbody>
             </table>
@@ -1456,7 +506,7 @@
       <div id="comments" class="comments-section bg-white p-5 rounded-4 border">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h3 class="fw-bold mb-0">
-            <i class="bi bi-chat-dots" style="color: #72AEC8;"></i> Questions & Answers
+            <i class="bi bi-chat-dots text-brand"></i> Questions & Answers
           </h3>
         </div>
 
@@ -1595,7 +645,7 @@
         {{#if (gt totalPages 1)}}
         <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
           <div class="text-muted">
-            <small><i class="bi bi-chat-dots-fill me-1" style="color: #72AEC8;"></i>Page
+            <small><i class="bi bi-chat-dots-fill me-1 text-brand"></i>Page
               <strong>{{commentPage}}</strong> of <strong>{{totalPages}}</strong> </small>
           </div>
           <nav aria-label="Comments pagination">
@@ -1667,7 +717,7 @@
         <div class="bidding-history-section bg-white p-4 rounded-4 border">
         <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom flex-nowrap">
           <h5 class="fw-bold mb-0 me-2" style="white-space: nowrap;">
-            <i class="bi bi-clock-history" style="color: #72AEC8;"></i> Bidding History
+            <i class="bi bi-clock-history text-brand"></i> Bidding History
           </h5>
           {{#if isAuthenticated}}
           <a href="/products/bidding-history?id={{product.id}}" class="btn btn-sm fw-bold flex-shrink-0"
@@ -1782,7 +832,7 @@
   <div class="row mt-5">
     <div class="col-12">
       <h3 class="fw-bold mb-4">
-        <i class="bi bi-box-seam" style="color: #72AEC8;"></i> Related Products
+        <i class="bi bi-box-seam text-brand"></i> Related Products
       </h3>
       <div class="related-section">
         <div class="row g-4">
@@ -1851,7 +901,7 @@
       <div class="modal-body px-4 py-4">
         <!-- Loading State -->
         <div id="ratingsLoading" class="text-center py-5">
-          <div class="spinner-border" style="color: #72AEC8;" role="status">
+          <div class="spinner-border text-brand" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
           <p class="text-muted mt-3">Loading ratings...</p>
@@ -1878,7 +928,7 @@
               <div class="row h-100">
                 <div class="col-4">
                   <div class="text-center p-3">
-                    <div class="mb-2" style="color: #72AEC8;">
+                    <div class="mb-2 text-brand">
                       <i class="bi bi-chat-dots-fill" style="font-size: 1.5rem;"></i>
                     </div>
                     <h4 class="fw-bold mb-1" id="totalReviewsCount">0</h4>
@@ -1947,7 +997,7 @@
               <i class="bi bi-cash-coin me-2" style="color: #72AEC8; font-size: 1.5rem;"></i>
               <div>
                 <small class="text-muted d-block" style="font-size: 0.75rem;">Current Price</small>
-                <strong class="fs-5" style="color: #72AEC8;">
+                <strong class="fs-5 text-brand">
                   <span id="modalCurrentPrice">{{format_number product.current_price}}</span> VND
                 </strong>
               </div>
@@ -1961,7 +1011,7 @@
 
           <div class="mb-4">
             <label for="bidAmount" class="form-label fw-bold mb-3">
-              <i class="bi bi-tag me-2" style="color: #72AEC8;"></i>Your Maximum Bid Amount
+              <i class="bi bi-tag me-2 text-brand"></i>Your Maximum Bid Amount
             </label>
             <div class="input-group input-group-lg shadow-sm">
               <button type="button" class="btn btn-outline-secondary" id="decreaseBid"
@@ -2002,7 +1052,7 @@
             
             <div class="d-flex justify-content-between align-items-center mt-3">
               <small class="text-muted">
-                <i class="bi bi-arrow-up-down me-1" style="color: #72AEC8;"></i>
+                <i class="bi bi-arrow-up-down me-1 text-brand"></i>
                 Step: <strong>{{format_number product.step_price}}</strong> VND
               </small>
               <small class="text-muted">
@@ -2018,7 +1068,7 @@
             <input class="form-check-input flex-shrink-0 mt-1" type="checkbox" id="confirmBidCheckbox" required
               style="width: 1.25em; height: 1.25em; cursor: pointer; border-color: #72AEC8;">
             <label class="form-check-label ms-3" for="confirmBidCheckbox" style="cursor: pointer; line-height: 1.5;">
-              <i class="bi bi-shield-check me-1" style="color: #72AEC8;"></i>
+              <i class="bi bi-shield-check me-1 text-brand"></i>
               <span class="fw-semibold" style="color: #5a9bb8;">I confirm to place this maximum bid</span>
               <small class="d-block text-muted mt-1">
                 By checking this box, you agree to the auction terms
