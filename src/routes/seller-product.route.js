@@ -1,5 +1,6 @@
 import express from 'express';
 import * as productModel from '../models/product.model.js';
+import * as sellerModel from '../models/seller.model.js'
 import * as reviewModel from '../models/review.model.js';
 import * as productDescUpdateModel from '../models/productDescriptionUpdate.model.js';
 import * as biddingHistoryModel from '../models/biddingHistory.model.js';
@@ -13,7 +14,7 @@ import fs from 'fs';
 const router = express.Router();
 
 // Helper function to get seller stats for dashboard -- DRY principle
-const getSellerStats = (sellerId) => productModel.getSellerStats(sellerId);
+const getSellerStats = (sellerId) => sellerModel.getSellerStats(sellerId);
 
 router.get('/', async function (req, res) {
     const stats = await getSellerStats(req.session.authUser.id);
@@ -28,13 +29,13 @@ const renderSellerProducts = async (req, res, fetchFn, view, extra = {}) => {
 
 // All Products - View only
 router.get('/products', async function (req, res) {
-    await renderSellerProducts(req, res, productModel.findAllProductsBySellerId, 'vwSeller/all-products');
+    await renderSellerProducts(req, res, sellerModel.findAllProductsBySellerId, 'vwSeller/all-products');
 });
 
 
 // Active Products - CRUD
 router.get('/products/active', async (req, res) => {
-    await renderSellerProducts(req, res, productModel.findActiveProductsBySellerId, 'vwSeller/active');
+    await renderSellerProducts(req, res, sellerModel.findActiveProductsBySellerId, 'vwSeller/active');
 });
 
 // Pending Products - Waiting for payment

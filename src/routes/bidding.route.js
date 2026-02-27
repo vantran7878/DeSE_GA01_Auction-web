@@ -303,6 +303,8 @@ router.post('/bid', isAuthenticated, async (req, res) => {
           created_at = NOW()
       `, [productId, userId, bidAmount]);
 
+
+
       return { 
         newCurrentPrice, 
         newHighestBidderId, 
@@ -319,14 +321,26 @@ router.post('/bid', isAuthenticated, async (req, res) => {
       };
     });
 
+    const [seller, currentBidder, previousBidder] = await Promise.all([
+      userModel.findById(result.sellerId),
+      userModel.findById(result.userId),
+      result.previousHighestBidderId && result.previousHighestBidderId !== result.userId
+        ? userModel.findById(result.previousHighestBidderId)
+        : null
+    ]);
+
+    //append seller, currentBidder, previousBidder to result for notification handlers
+    const enrichedResult = Object.assign({}, result, { seller, currentBidder, previousBidder });
+    console.log('Enriched Result for Notifications:', enrichedResult);
+
     // ========== SEND EMAIL NOTIFICATIONS (outside transaction) ==========
     // IMPORTANT: Run email sending asynchronously to avoid blocking the response
     // This significantly improves perceived performance for the user
     // EDITED: NEW notifier style through helpers
     const productUrl = `${req.protocol}://${req.get('host')}/products/detail?id=${productId}`;
 
-    const activeHandlers = bidNotificationHandlers.filter(handler => handler.shouldHandle(result));
-    await Promise.all(activeHandlers.map(handler => handler.send(result, sendMail, productUrl, result.productName)));
+    const activeHandlers = bidNotificationHandlers.filter(handler => handler.shouldHandle(enrichedResult));
+    await Promise.all(activeHandlers.map(handler => handler.send(enrichedResult, sendMail, productUrl, enrichedResult.productName)));
 
     // Success message
     let baseMessage = '';
