@@ -1,7 +1,6 @@
 import express from 'express';
 import * as productModel from '../models/product.model.js';
 import * as reviewModel from '../models/review.model.js';
-//import * as autoBiddingModel from '../models/autoBidding.model.js';
 import * as orderModel from '../models/order.model.js';
 import * as invoiceModel from '../models/invoice.model.js';
 import * as orderChatModel from '../models/orderChat.model.js';
