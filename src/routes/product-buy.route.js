@@ -5,7 +5,7 @@ import db from '../utils/db.js';
 
 const router = express.Router();
 
-//EDIT: HELPER FUNCTION, KISS
+//EDIT: HELPER FUNCTION, DRY, KISS
 
 const executeBuyNow = async (trx, productId, userId) => {
   // 1. Fetch product with seller info

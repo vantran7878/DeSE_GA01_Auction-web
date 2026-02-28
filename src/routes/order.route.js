@@ -6,6 +6,7 @@ import * as orderModel from '../models/order.model.js';
 import * as invoiceModel from '../models/invoice.model.js';
 import * as orderChatModel from '../models/orderChat.model.js';
 import { isAuthenticated } from '../middlewares/auth.mdw.js';
+import { determineProductStatus } from './helpers/determineProductStatus.js';
 import db from '../utils/db.js';
 import multer from 'multer';
 import path from 'path';
@@ -23,18 +24,6 @@ const parseArrayField = (field) => {
   }
   return field;
 };
-
-const determineProductStatus = (product) => {
-  const now = new Date();
-  const endDate = new Date(product.end_at);
-
-  if (product.is_sold === true) return 'SOLD';
-  if (product.is_sold === false) return 'CANCELLED';
-  if ((endDate <= now || product.closed_at) && product.highest_bidder_id) return 'PENDING';
-  if (endDate <= now && !product.highest_bidder_id) return 'EXPIRED';
-  return 'ACTIVE';
-};
-
 
 
 // ROUTE: COMPLETE ORDER PAGE (For PENDING products)

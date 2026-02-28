@@ -6,18 +6,11 @@ import * as productModel from '../models/product.model.js';
 import * as reviewModel from '../models/review.model.js';
 import * as biddingHistoryModel from '../models/biddingHistory.model.js';
 import * as rejectedBidderModel from '../models/rejectedBidder.model.js';
+import { determineProductStatus } from './helpers/determineProductStatus.js';
 
 const router = express.Router();
 
 
-const determineProductStatus = (product, now) => {
-  const endDate = new Date(product.end_at);
-  if (product.is_sold === true) return 'SOLD';
-  if (product.is_sold === false) return 'CANCELLED';
-  if ((endDate <= now || product.closed_at) && product.highest_bidder_id) return 'PENDING';
-  if (endDate <= now && !product.highest_bidder_id) return 'EXPIRED';
-  if (endDate > now && !product.closed_at) return 'ACTIVE';
-}
 
 router.get('/detail', async (req, res) => {
   const userId = req.session.authUser ? req.session.authUser.id : null;
@@ -41,7 +34,7 @@ router.get('/detail', async (req, res) => {
   }
   
   //DRY fixed for if statement and status determination
-  const productStatus = determineProductStatus(product, now);
+  const productStatus = determineProductStatus(product);
 
   // Edited, DRY fixed: 
   // Authorization check: Non-ACTIVE products can only be viewed by seller or highest bidder
