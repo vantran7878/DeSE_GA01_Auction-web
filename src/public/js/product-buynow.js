@@ -1,4 +1,4 @@
-const { isAuthenticated, detailUrl } = window.PRODUCT_DATA;
+// const { isAuthenticated, detailUrl } = window.PRODUCT_DATA;
 
 document.querySelector('.btn-buy-now')?.addEventListener('click', function() {
   if (!isAuthenticated) {

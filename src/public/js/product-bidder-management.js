@@ -1,4 +1,4 @@
-const { productId } = window.PRODUCT_DATA;
+// const { productId } = window.PRODUCT_DATA;
 
 function handleBidderAction(btn, config) {
   btn.addEventListener('click', function(e) {
